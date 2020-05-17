@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Guess the flag</title>
+    <link rel="stylesheet" type="text/css" href="./style.css">
+  </style>
+  </head>
+  <body>
+    <div>
+        <div id="flag">
+        </div>
+        <div id="colselect">
+          <span id="red"></span>
+          <span id="orange"></span>
+          <span id="yellow"></span>
+          <span id="green"></span>
+          <span id="blue"></span>
+          <span id="indigo"></span>
+          <span id="violet"></span>
+          <span id="white"></span>
+          <span id="black"></span>
+        </div><br>
+        <p>Please draw the shown flag!</p>
+        <p>Drawn flag: <span id="selected">none</span></p>
+      <span id="status">JQuery is missing...</span>
+      <input type="text" id="input" disabled="disabled" />
+    </div>
+    <div id="content"></div>
+    <script src="../node_modules/jquery/dist/jquery.min.js">
+    </script>
+    <script src="./flags.js"></script>
+    <script src="./chat.js"></script>
+  </body>
+</html>

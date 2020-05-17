@@ -1,0 +1,12 @@
+{
+  "name": "Chat",
+  "version": "0.1.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "jquery": "^3.5.0",
+    "websocket": "^1.0.31"
+  }
+}
