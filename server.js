@@ -72,18 +72,44 @@ wsServer.on('request', function(request) {
           broadcastMessage(message.utf8Data);
         } else if (json.type === 'gamesettings') {
           if (json.value === 'start_game') {
-            const drawer = players.slice(0, 1);
+            var randomPlayer = Math.floor(Math.random() * (players.length))
+            console.log(randomPlayer);
+            var drawer = players.slice(randomPlayer, randomPlayer+1);
             console.log('And the drawer of this round is ' + drawer);
             broadcastMessage(JSON.stringify({ type: 'drawer', value: drawer }));
             gameStatus = 'waitingForFlag';
+            var obj = {
+              time: (new Date()).getTime(),
+              text: 'Please wait while flag is getting selected',
+              author: drawer,
+              color: userColor
+            };
+            var json = JSON.stringify({ type: 'message', data: obj });
+            broadcastMessage(json);
           } else if (json.value === 'flag') {
             console.log('Selected flag ' + json.flag);
             answer = json.flag;
             broadcastMessage(JSON.stringify({ type: 'flag', value: json.flag }));
+            var obj = {
+              time: (new Date()).getTime(),
+              text: 'Flag is selected. Have fun!',
+              author: 'system',
+              color: userColor
+            };
+            var json = JSON.stringify({ type: 'message', data: obj });
+            broadcastMessage(json);
             gameStatus = 'play';
           } else if (json.value === 'win') {
             console.log('Win registered. Congrats ' + json.userName);
-            broadcastMessage(JSON.stringify({ type: 'message', value: json.userName + ' guessed the right country ' + answer + '! Congrats!' }));
+            var obj = {
+              time: (new Date()).getTime(),
+              text: json.userName + ' guessed the right country ' + answer + '! Congrats!!',
+              author: userName,
+              color: userColor
+            };
+            var json = JSON.stringify({ type: 'message', data: obj });
+            broadcastMessage(json);
+            broadcastMessage(JSON.stringify({ type: 'restart_game' }));
             gameStatus = 'end';
           }
         }

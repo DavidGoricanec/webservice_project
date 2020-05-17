@@ -2,7 +2,7 @@ $(function() {
   "use strict";
 
   $("#dialogDiv").dialog({
-	  autoOpen: false
+    autoOpen: false
   });
 
   let div = document.querySelector('#flag');
@@ -18,6 +18,8 @@ $(function() {
       .classList.add('pixel');
   }
 
+  document.getElementById("start_game").style.display = "none";
+
   document.getElementById('start_game').addEventListener('click', () => {
     var obj = {
       type: 'gamesettings',
@@ -28,12 +30,12 @@ $(function() {
 
   //populate select box
   for (i = 0; i < flags.length; i++) {
-	$("#flag_selector").append($("<option />").val(names[i]).text(names[i]));
+    $("#flag_selector").append($("<option />").val(names[i]).text(names[i]));
   }
 
-  document.querySelectorAll('#colselect>span').forEach(s=>{
-    s.addEventListener('click',e=>{
-    color = e.target.id;
+  document.querySelectorAll('#colselect>span').forEach(s => {
+    s.addEventListener('click', e => {
+      color = e.target.id;
     })
   });
   document.querySelectorAll('.pixel').forEach(s => {
@@ -72,7 +74,7 @@ $(function() {
     let a = getArr().map(x => { return x == '' ? 'white' : x });
     for (i = 0; i < flags.length; i++) {
       if (JSON.stringify(flags[i].map(x => { return x == '' ? 'white' : x })) == JSON.stringify(a)) {
-        return flagnames[i];
+        return names[i];
       }
     }
     return 'none';
@@ -86,13 +88,14 @@ $(function() {
     sendMessage(obj);
   }
 
-//Modal Selection
-document.getElementById("confirm_selection").addEventListener('click',e=>{
-	answer = $("#flag_selector").val();
+  //Modal Selection
+  document.getElementById("confirm_selection").addEventListener('click', e => {
+    answer = $("#flag_selector").val();
+    sendSelectedFlag(answer);
     $("#dialogDiv").dialog("close");
-});
+  });
 
-//Server Connection
+  //Server Connection
 
   function sendClick(id, color) {
     var obj = {
@@ -155,6 +158,7 @@ document.getElementById("confirm_selection").addEventListener('click',e=>{
       myColor = '#' + json.data;
       status.text(myName + ': ').css('color', myColor);
       input.removeAttr('disabled').focus();
+      document.getElementById("start_game").style.display = "inline";
     } else if (json.type === 'message') {
       input.removeAttr('disabled');
       addMessage(json.data.author, json.data.text, json.data.color, new Date(json.data.time));
@@ -166,6 +170,7 @@ document.getElementById("confirm_selection").addEventListener('click',e=>{
       if (myName == json.value) {
         document.getElementById('draw_rights').checked = true;
         console.log('I am the drawer');
+        $("#dialogDiv").dialog("open");
       } else {
         document.getElementById('draw_rights').checked = false;
         console.log('I am the guesser');
@@ -174,6 +179,9 @@ document.getElementById("confirm_selection").addEventListener('click',e=>{
     } else if (json.type === 'flag') {
       console.log('secret answer is ' + json.value + ' - do not tell anyone!');
       answer = json.value;
+    } else if (json.type === 'restart_game') {
+      document.getElementById("start_game").style.display = "inline";
+      $("span.pixel").css('background', 'white');
     } else {
       console.log('Unsupported syntax :(');
     }
@@ -195,9 +203,7 @@ document.getElementById("confirm_selection").addEventListener('click',e=>{
       // sends back response
       input.attr('disabled', 'disabled');
 
-      if(msg.toLowerCase() == answer.toLowerCase())
-      {
-        alert('Correct answer!!');
+      if (msg.toLowerCase() == answer.toLowerCase()) {
         var obj = {
           type: 'gamesettings',
           value: 'win',
