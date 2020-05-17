@@ -4,10 +4,11 @@
     <meta charset="utf-8">
     <title>Guess the flag</title>
     <link rel="stylesheet" type="text/css" href="./style.css">
+	<link rel="stylesheet" type="text/css" href="../node_modules/jquery-ui-dist/jquery-ui.min.css">
   </style>
   </head>
   <body>
-    <div>
+    <div id= "main">
         <div id="flag">
         </div>
         <div id="colselect">
@@ -28,9 +29,17 @@
       <span id="status">JQuery is missing...</span>
       <input type="text" id="input" disabled="disabled" />
     </div>
+	<div id = "dialogDiv" title="Select your Flag!">
+		<p>Please select one of the avaiable flags down below. The other players will try to guess your flag!</p>
+		<select id="flag_selector">Select your Flag!
+		</select>
+		<br />
+		<br />
+		<button type="button" id="confirm_selection">Confirm flag and start game!</button>
+	</div>
     <div id="content"></div>
-    <script src="../node_modules/jquery/dist/jquery.min.js">
-    </script>
+    <script src="../node_modules/jquery/dist/jquery.min.js"></script>
+	<script src="../node_modules/jquery-ui-dist/jquery-ui.min.js"></script>
     <script src="./flags.js"></script>
     <script src="./chat.js"></script>
   </body>

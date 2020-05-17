@@ -1,6 +1,10 @@
 $(function() {
   "use strict";
 
+  $("#dialogDiv").dialog({
+	  autoOpen: false
+  });
+
   let div = document.querySelector('#flag');
   const x = 15;
   const y = 9;
@@ -13,6 +17,7 @@ $(function() {
     div.appendChild(box)
       .classList.add('pixel');
   }
+
   document.getElementById('start_game').addEventListener('click', () => {
     var obj = {
       type: 'gamesettings',
@@ -21,9 +26,14 @@ $(function() {
     sendMessage(obj);
   });
 
-  document.querySelectorAll('#colselect>span').forEach(s => {
-    s.addEventListener('click', e => {
-      color = e.target.id;
+  //populate select box
+  for (i = 0; i < flags.length; i++) {
+	$("#flag_selector").append($("<option />").val(names[i]).text(names[i]));
+  }
+
+  document.querySelectorAll('#colselect>span').forEach(s=>{
+    s.addEventListener('click',e=>{
+    color = e.target.id;
     })
   });
   document.querySelectorAll('.pixel').forEach(s => {
@@ -67,7 +77,6 @@ $(function() {
     }
     return 'none';
   }
-
   function sendSelectedFlag(flagName) {
     var obj = {
       type: 'gamesettings',
@@ -76,6 +85,14 @@ $(function() {
     };
     sendMessage(obj);
   }
+
+//Modal Selection
+document.getElementById("confirm_selection").addEventListener('click',e=>{
+	answer = $("#flag_selector").val();
+    $("#dialogDiv").dialog("close");
+});
+
+//Server Connection
 
   function sendClick(id, color) {
     var obj = {
