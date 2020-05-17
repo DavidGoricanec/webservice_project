@@ -1,4 +1,4 @@
-$(function () {
+$(function() {
   "use strict";
 
   let div = document.querySelector('#flag');
@@ -7,58 +7,74 @@ $(function () {
   var answer = "";
   let color = 'black';
   let down = false;
-  for (var i = 0; i < x*y; i++) {
+  for (var i = 0; i < x * y; i++) {
     let box = document.createElement('span');
     box.id = i;
     div.appendChild(box)
       .classList.add('pixel');
   }
-  document.querySelectorAll('#colselect>span').forEach(s=>{
-    s.addEventListener('click',e=>{
-    color = e.target.id;
+  document.getElementById('start_game').addEventListener('click', () => {
+    var obj = {
+      type: 'gamesettings',
+      value: 'start_game'
+    };
+    sendMessage(obj);
+  });
+
+  document.querySelectorAll('#colselect>span').forEach(s => {
+    s.addEventListener('click', e => {
+      color = e.target.id;
     })
   });
-  document.querySelectorAll('.pixel').forEach(s=>{
-    s.addEventListener('mouseover',e=>{
+  document.querySelectorAll('.pixel').forEach(s => {
+    s.addEventListener('mouseover', e => {
       if (down && document.getElementById("draw_rights").checked) {
-        e.target.style.background=color;
-        document.querySelector('#selected').innerHTML=validate();
+        e.target.style.background = color;
+        document.querySelector('#selected').innerHTML = validate();
         console.log('clicked on ' + e.target.id + ' with color ' + color);
         sendClick(e.target.id, color);
       }
     });
-    s.addEventListener('mousedown',e=>{
-	  if (document.getElementById("draw_rights").checked)
-	  {
-		  e.target.style.background=color;
-		  document.querySelector('#selected').innerHTML=validate();
-		  console.log('clicked on ' + e.target.id + ' with color ' + color);
-		  sendClick(e.target.id, color);
-	  }
+    s.addEventListener('mousedown', e => {
+      if (document.getElementById("draw_rights").checked) {
+        e.target.style.background = color;
+        document.querySelector('#selected').innerHTML = validate();
+        console.log('clicked on ' + e.target.id + ' with color ' + color);
+        sendClick(e.target.id, color);
+      }
     })
   });
-  div.addEventListener('mousedown',e=>{
-    down=true;
+  div.addEventListener('mousedown', e => {
+    down = true;
   });
-  div.addEventListener('mouseup',e=>{
-    down=false;
+  div.addEventListener('mouseup', e => {
+    down = false;
   });
   function getArr() {
     const ret = [];
-    document.querySelectorAll('.pixel').forEach(s=>{
+    document.querySelectorAll('.pixel').forEach(s => {
       ret.push(s.style.background);
     });
     return ret;
   }
 
   function validate() {
-    let a=getArr().map(x=>{return x==''?'white':x});
+    let a = getArr().map(x => { return x == '' ? 'white' : x });
     for (i = 0; i < flags.length; i++) {
-      if (JSON.stringify(flags[i].map(x=>{return x==''?'white':x})) == JSON.stringify(a)) {
+      if (JSON.stringify(flags[i].map(x => { return x == '' ? 'white' : x })) == JSON.stringify(a)) {
         return flagnames[i];
       }
     }
     return 'none';
+  }
+
+  function sendSelectedFlag(flagName) {
+    var obj = {
+      type: 'gamesettings',
+      value: 'flag',
+      flag: flagName
+    };
+    sendMessage(obj);
   }
 
   function sendClick(id, color) {
@@ -84,7 +100,7 @@ $(function () {
 
   if (!window.WebSocket) {
     content.html($('<p>',
-      { text:'Your browser doesn\'t support WebSockets :('}
+      { text: 'Your browser doesn\'t support WebSockets :(' }
     ));
     input.hide();
     $('span').hide();
@@ -97,20 +113,20 @@ $(function () {
     connection.send(JSON.stringify(obj));
   }
 
-  connection.onopen = function () {
+  connection.onopen = function() {
     input.removeAttr('disabled');
     status.text('Choose name:');
     input.val('');
   };
 
-  connection.onerror = function (error) {
+  connection.onerror = function(error) {
     // when we have some problems with the connection
     content.html($('<p>', {
       text: 'It seems the server is down :('
     }));
   };
 
-  connection.onmessage = function (message) {
+  connection.onmessage = function(message) {
     try {
       var json = JSON.parse(message.data);
     } catch (e) {
@@ -128,6 +144,19 @@ $(function () {
     } else if (json.type === 'click') {
       console.log('received click for id ' + json.id + ' with color ' + json.color)
       document.getElementById(json.id).style.background = json.color;
+    } else if (json.type === 'drawer') {
+      console.log('my name is ' + myName + ' and drawer is ' + json.value);
+      if (myName == json.value) {
+        document.getElementById('draw_rights').checked = true;
+        console.log('I am the drawer');
+      } else {
+        document.getElementById('draw_rights').checked = false;
+        console.log('I am the guesser');
+      }
+      document.getElementById("start_game").style.display = "none";
+    } else if (json.type === 'flag') {
+      console.log('secret answer is ' + json.value + ' - do not tell anyone!');
+      answer = json.value;
     } else {
       console.log('Unsupported syntax :(');
     }
@@ -140,14 +169,25 @@ $(function () {
         return;
       }
       var obj = {
-          type: 'message',
-          text: msg
+        type: 'message',
+        text: msg
       };
       sendMessage(obj);
       $(this).val('');
       // disable the input field to make the user wait until server
       // sends back response
       input.attr('disabled', 'disabled');
+
+      if(msg.toLowerCase() == answer.toLowerCase())
+      {
+        alert('Correct answer!!');
+        var obj = {
+          type: 'gamesettings',
+          value: 'win',
+          userName: myName,
+        };
+        sendMessage(obj);
+      }
 
       if (myName === false) {
         myName = msg;
@@ -164,7 +204,7 @@ $(function () {
     if (connection.readyState !== 1) {
       status.text('Error');
       input.attr('disabled', 'disabled').val(
-          'Unable to communicate with the WebSocket server.');
+        'Unable to communicate with the WebSocket server.');
     }
   }, 3000);
 
@@ -173,10 +213,10 @@ $(function () {
    */
   function addMessage(author, message, color, dt) {
     content.prepend('<p class="chat-message"><span class="chat-name" style="color:#' + color + '">'
-        + author + '</span> @ ' + (dt.getHours() < 10 ? '0'
+      + author + '</span> @ ' + (dt.getHours() < 10 ? '0'
         + dt.getHours() : dt.getHours()) + ':'
-        + (dt.getMinutes() < 10
-          ? '0' + dt.getMinutes() : dt.getMinutes())
-        + ': ' + message + '</p>');
+      + (dt.getMinutes() < 10
+        ? '0' + dt.getMinutes() : dt.getMinutes())
+      + ': ' + message + '</p>');
   }
 });
