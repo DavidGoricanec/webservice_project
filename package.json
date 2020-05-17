@@ -8,6 +8,6 @@
   "dependencies": {
     "jquery": "^3.5.0",
     "websocket": "^1.0.31",
-    "jquery-ui": "^1.12.1"
+    "jquery-ui-dist": "^1.12.1"
   }
 }

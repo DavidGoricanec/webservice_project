@@ -1,6 +1,10 @@
 $(function () {
   "use strict";
 
+  $("#dialogDiv").dialog({
+	  autoOpen: false
+  });
+
   let div = document.querySelector('#flag');
   const x = 15;
   const y = 9;
@@ -13,6 +17,12 @@ $(function () {
     div.appendChild(box)
       .classList.add('pixel');
   }
+
+  //populate select box
+  for (i = 0; i < flags.length; i++) {
+	$("#flag_selector").append($("<option />").val(names[i]).text(names[i]));
+  }
+  
   document.querySelectorAll('#colselect>span').forEach(s=>{
     s.addEventListener('click',e=>{
     color = e.target.id;
@@ -60,6 +70,14 @@ $(function () {
     }
     return 'none';
   }
+
+//Modal Selection
+document.getElementById("confirm_selection").addEventListener('click',e=>{
+	answer = $("#flag_selector").val();
+    $("#dialogDiv").dialog("close");
+});
+
+//Server Connection
 
   function sendClick(id, color) {
     var obj = {
