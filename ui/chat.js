@@ -22,7 +22,7 @@ $(function () {
       if (down && document.getElementById("draw_rights").checked) {
         e.target.style.background=color;
         document.querySelector('#selected').innerHTML=validate();
-        console.log('clicked on ' + e.target.id + ' with color ' + color); 
+        console.log('clicked on ' + e.target.id + ' with color ' + color);
         sendClick(e.target.id, color);
       }
     });
@@ -31,7 +31,7 @@ $(function () {
 	  {
 		  e.target.style.background=color;
 		  document.querySelector('#selected').innerHTML=validate();
-		  console.log('clicked on ' + e.target.id + ' with color ' + color); 
+		  console.log('clicked on ' + e.target.id + ' with color ' + color);
 		  sendClick(e.target.id, color);
 	  }
     })
@@ -69,7 +69,6 @@ $(function () {
     sendMessage(obj);
   }
 
-  // for better performance - to avoid searching in DOM
   var content = $('#content');
   var input = $('#input');
   var status = $('#status');
@@ -104,7 +103,7 @@ $(function () {
   };
 
   connection.onerror = function (error) {
-    // just in there were some problems with connection...
+    // when we have some problems with the connection
     content.html($('<p>', {
       text: 'It seems the server is down :('
     }));
@@ -118,7 +117,7 @@ $(function () {
       return;
     }
 
-    if (json.type === 'color') { 
+    if (json.type === 'color') {
       myColor = '#' + json.data;
       status.text(myName + ': ').css('color', myColor);
       input.removeAttr('disabled').focus();
