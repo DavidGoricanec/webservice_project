@@ -96,3 +96,6 @@ div {
 #black {
   background: black!important;
 }
+#draw_rights_UI{
+	display : none;
+}
