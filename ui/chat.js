@@ -19,7 +19,7 @@ $(function () {
   });
   document.querySelectorAll('.pixel').forEach(s=>{
     s.addEventListener('mouseover',e=>{
-      if (down) {
+      if (down && document.getElementById("draw_rights").checked) {
         e.target.style.background=color;
         document.querySelector('#selected').innerHTML=validate();
         console.log('clicked on ' + e.target.id + ' with color ' + color); 
@@ -27,10 +27,13 @@ $(function () {
       }
     });
     s.addEventListener('mousedown',e=>{
-      e.target.style.background=color;
-      document.querySelector('#selected').innerHTML=validate();
-      console.log('clicked on ' + e.target.id + ' with color ' + color); 
-      sendClick(e.target.id, color);
+	  if (document.getElementById("draw_rights").checked)
+	  {
+		  e.target.style.background=color;
+		  document.querySelector('#selected').innerHTML=validate();
+		  console.log('clicked on ' + e.target.id + ' with color ' + color); 
+		  sendClick(e.target.id, color);
+	  }
     })
   });
   div.addEventListener('mousedown',e=>{
