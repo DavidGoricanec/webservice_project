@@ -4,6 +4,7 @@ $(function () {
   let div = document.querySelector('#flag');
   const x = 15;
   const y = 9;
+  var answer = "";
   let color = 'black';
   let down = false;
   for (var i = 0; i < x*y; i++) {
