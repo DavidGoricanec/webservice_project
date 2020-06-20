@@ -107,24 +107,26 @@ $(function() {
 
   //Modal Login
     document.getElementById("btn_login").addEventListener('click', e => {
-	var v_username = $("#username").val();
-	var v_password = $("#password").val();
+		var v_username = $("#username").val();
+		var v_password = $("#password").val();
 
-	
-	if(v_username == null || v_password == null || v_username == "" || v_password == "")
-	{
-		alert("Please insert a username and a password")
-		return
-	}
-	
-	$.post( "localhost:5000/api/authenticate", { username: v_username, password:v_password  })
-	  .done(function( data ) {
-		alert( "Data Loaded: " + data );
-	}).fail(function() {
-		alert( "error" );
-	}).always(function() {
-		$("#dialogLoginDiv").dialog("close");
-    });
+		
+		if(v_username == null || v_password == null || v_username == "" || v_password == "")
+		{
+			alert("Please insert a username and a password")
+			return
+		}
+		
+		$.post( "localhost:5000/api/authenticate", { username: v_username, password:v_password  })
+		  .done(function( data ) {
+			alert( "Data Loaded: " + data );
+		}).fail(function() {
+			alert( "error" );
+		}).always(function() {
+			$("#dialogLoginDiv").dialog("close");
+		});
+		
+	});
 
   //Server Connection
 
