@@ -8,6 +8,13 @@ const rest = express(); // init express Server
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 
+const cors = require('cors');
+
+var corsOptions = {
+  origin: '*',
+  optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+}
+
 const db = require('./db');
 
 // websocket server port
@@ -16,6 +23,7 @@ var webSocketsServerPort = 1999;
 // websocket and http servers
 var webSocketServer = require('websocket').server;
 var http = require('http');
+const bodyParser = require('body-parser');
 
 var clients = [];
 var players = [];
@@ -27,22 +35,55 @@ const htmlEntities = helper.htmlEntities;
 const getColor = helper.getColor;
 const removeColor = helper.removeColor;
 
-rest.get('/api/authenticate', (req, res) => {
-  console.log('create');
-  const loginInformation = {
-    username: req.body.username,
-    password: req.body.password,
-  };
-  console.log(username);
-  console.log(password);
-  if (db.usernameExists('hallo')) {
-    console.log('works')
-  }else{
-    console.log('errrrrrroor')
-  }
-  res.json({
-    message: 'User Authentication'
-  });
+rest.use(bodyParser.urlencoded({ extended: false }));
+rest.use(bodyParser.json());
+
+rest.post('/api/authenticate', cors(corsOptions), (req, res) => {
+  console.log('post /api/authenticate');
+  let token = null;
+  const username = req.body.username;
+  const password = req.body.password;
+  console.log('received un' + username);
+  console.log('received pw' + password);
+  const promise = db.usernameExists(username);
+  promise.then(function (result) {
+    if (result) {
+      db.usernamePassword(username, password)
+      .then((result) => {
+        console.log("usernamepasswordreturn" + result)
+        if (result) {
+          token = db.getToken(username);
+          console.log('received token: ' + token)
+          res.json({
+            token: token
+          });
+        }
+      })
+      .catch((e) => {
+        console.log(e.message)
+        res.json({
+          message: 'User Authentication Failure'
+        });
+      })
+    }else{
+      db.saveUsername(username, password)
+      .then (value => {
+        console.log('user id:')
+        console.log(value)
+          token = db.getToken(username);
+          res.json({
+            token: token
+          })
+      })
+      .catch(e => {
+        console.log(e)
+      });
+      res.json({
+        message: 'User Authentication Failure'
+      });
+    }
+  })
+
 });
 
 
@@ -53,6 +94,7 @@ server.listen(webSocketsServerPort, function() {
 });
 
 rest.listen(5000, () => console.log('REST server started on port 5000'));
+
 
 var wsServer = new webSocketServer({
   httpServer: server
