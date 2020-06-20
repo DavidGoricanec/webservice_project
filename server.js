@@ -1,6 +1,13 @@
 "use strict";
 process.title = 'chat';
 
+const express = require('express');
+const rest = express(); // init express Server
+
+// JSON Web Tokens (JWT) parts
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
+
 // websocket server port
 var webSocketsServerPort = 1999;
 
@@ -18,12 +25,20 @@ const htmlEntities = helper.htmlEntities;
 const getColor = helper.getColor;
 const removeColor = helper.removeColor;
 
+rest.get('/api/bla', (req, res) => {
+    res.json({
+        message: 'Welcome to the API'
+    });
+});
+
 
 var server = http.createServer(function(request, response) {
 });
 server.listen(webSocketsServerPort, function() {
-  console.log((new Date()) + " Server is listening on port " + webSocketsServerPort);
+  console.log((new Date()) + " WS server is listening on port " + webSocketsServerPort);
 });
+
+rest.listen(5000, () => console.log('REST server started on port 5000'));
 
 var wsServer = new webSocketServer({
   httpServer: server
