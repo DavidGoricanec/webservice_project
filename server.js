@@ -33,6 +33,8 @@ rest.get('/api/authenticate', (req, res) => {
     username: req.body.username,
     password: req.body.password,
   };
+  console.log(username);
+  console.log(password);
   if (db.usernameExists('hallo')) {
     console.log('works')
   }else{
