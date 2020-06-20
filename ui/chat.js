@@ -2,7 +2,8 @@ $(function() {
   "use strict";
 
   $("#dialogDiv, #dialogLoginDiv").dialog({
-    autoOpen: false
+    autoOpen: false,
+	closeOnEscape: false
   });
 
 
@@ -10,7 +11,9 @@ $(function() {
   var token = null;
   
   if (token == null)
-	  $("#dialogLoginDiv").dialog("open");
+  {
+	$("#dialogLoginDiv").dialog("open");
+  }
   
   let div = document.querySelector('#flag');
   const x = 15;

@@ -111,3 +111,6 @@ button
     border-radius: 7px;
 	color: white;
 }
+.ui-dialog-titlebar-close {
+    visibility: hidden;
+}
