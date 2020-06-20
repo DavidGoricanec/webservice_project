@@ -38,6 +38,23 @@ const removeColor = helper.removeColor;
 rest.use(bodyParser.urlencoded({ extended: false }));
 rest.use(bodyParser.json());
 
+rest.get('/api/flags', cors(corsOptions), (req, res) => {
+  console.log('get /api/flags')
+  var flagNames = [];
+  db.getFlags().then(flags => {
+    flags.forEach(flag => flagNames.push({flagName: flag.flagName, flagCounter: flag.flagCounter}))
+    res.json(flagNames)
+  })
+});
+
+rest.post('/api/flag', cors(corsOptions), (req, res) => {
+  console.log('post /api/flag')
+  const flagName = req.body.flagName
+  db.updateFlag(flagName).then(() => {
+    res.json('ok')
+  })
+});
+
 rest.post('/api/authenticate', cors(corsOptions), (req, res) => {
   console.log('post /api/authenticate');
   let token = null;
@@ -46,41 +63,41 @@ rest.post('/api/authenticate', cors(corsOptions), (req, res) => {
   console.log('received un' + username);
   console.log('received pw' + password);
   const promise = db.usernameExists(username);
-  promise.then(function (result) {
+  promise.then(function(result) {
     if (result) {
       db.usernamePassword(username, password)
-      .then((result) => {
-        console.log("usernamepasswordreturn" + result)
-        if (result) {
-          token = db.getToken(username);
-          console.log('received token: ' + token)
+        .then((result) => {
+          console.log("usernamepasswordreturn" + result)
+          if (result) {
+            token = db.getToken(username);
+            console.log('received token: ' + token)
+            res.json({
+              token: token
+            });
+          }
+        })
+        .catch((e) => {
+          console.log(e.message)
           res.json({
-            token: token
+            message: 'User Authentication Failure'
           });
-        }
-      })
-      .catch((e) => {
-        console.log(e.message)
-        res.json({
-          message: 'User Authentication Failure'
-        });
-      })
-    }else{
+        })
+    } else {
       db.saveUsername(username, password)
-      .then (value => {
-        console.log('user id:')
-        console.log(value)
+        .then(value => {
+          console.log('user id:')
+          console.log(value)
           token = db.getToken(username);
           res.json({
             token: token
           })
-      })
-      .catch(e => {
-        console.log(e)
-      });
-      res.json({
-        message: 'User Authentication Failure'
-      });
+        })
+        .catch(e => {
+          console.log(e)
+          res.json({
+            message: 'User Authentication Failure'
+          });
+        });
     }
   })
 
@@ -128,60 +145,64 @@ wsServer.on('request', function(request) {
         connection.sendUTF(JSON.stringify({ type: 'color', data: userColor }));
         players.push(userName);
       } else {
-        if (json.type === 'message') {
-          console.log((new Date()) + ' Received Message from ' + userName + ': ' + json.text);
-          var obj = {
-            time: (new Date()).getTime(),
-            text: htmlEntities(json.text),
-            author: userName,
-            color: userColor
-          };
-          var json = JSON.stringify({ type: 'message', data: obj });
-          broadcastMessage(json);
-        } else if (json.type === 'click') {
-          console.log('received click on id ' + json.id + ' with color ' + json.color);
-          broadcastMessage(message.utf8Data);
-        } else if (json.type === 'gamesettings') {
-          if (json.value === 'start_game') {
-            var randomPlayer = Math.floor(Math.random() * (players.length))
-            console.log(randomPlayer);
-            var drawer = players.slice(randomPlayer, randomPlayer + 1);
-            console.log('And the drawer of this round is ' + drawer);
-            broadcastMessage(JSON.stringify({ type: 'drawer', value: drawer }));
-            gameStatus = 'waitingForFlag';
+        console.log('received token ' + json.token)
+        const verify = jwt.verify(json.token, 'secretkey');
+        if (verify) {
+          if (json.type === 'message') {
+            console.log((new Date()) + ' Received Message from ' + userName + ': ' + json.text);
             var obj = {
               time: (new Date()).getTime(),
-              text: 'Please wait while flag is getting selected',
-              author: drawer,
-              color: userColor
-            };
-            var json = JSON.stringify({ type: 'message', data: obj });
-            broadcastMessage(json);
-          } else if (json.value === 'flag') {
-            console.log('Selected flag ' + json.flag);
-            answer = json.flag;
-            broadcastMessage(JSON.stringify({ type: 'flag', value: json.flag }));
-            var obj = {
-              time: (new Date()).getTime(),
-              text: 'Flag is selected. Have fun!',
-              author: 'system',
-              color: userColor
-            };
-            var json = JSON.stringify({ type: 'message', data: obj });
-            broadcastMessage(json);
-            gameStatus = 'play';
-          } else if (json.value === 'win') {
-            console.log('Win registered. Congrats ' + json.userName);
-            var obj = {
-              time: (new Date()).getTime(),
-              text: json.userName + ' guessed the right country ' + answer + '! Congrats!!',
+              text: htmlEntities(json.text),
               author: userName,
               color: userColor
             };
             var json = JSON.stringify({ type: 'message', data: obj });
             broadcastMessage(json);
-            broadcastMessage(JSON.stringify({ type: 'restart_game' }));
-            gameStatus = 'end';
+          } else if (json.type === 'click') {
+            console.log('received click on id ' + json.id + ' with color ' + json.color);
+            broadcastMessage(message.utf8Data);
+          } else if (json.type === 'gamesettings') {
+            if (json.value === 'start_game') {
+              var randomPlayer = Math.floor(Math.random() * (players.length))
+              console.log(randomPlayer);
+              var drawer = players.slice(randomPlayer, randomPlayer + 1);
+              console.log('And the drawer of this round is ' + drawer);
+              broadcastMessage(JSON.stringify({ type: 'drawer', value: drawer }));
+              gameStatus = 'waitingForFlag';
+              var obj = {
+                time: (new Date()).getTime(),
+                text: 'Please wait while flag is getting selected',
+                author: drawer,
+                color: userColor
+              };
+              var json = JSON.stringify({ type: 'message', data: obj });
+              broadcastMessage(json);
+            } else if (json.value === 'flag') {
+              console.log('Selected flag ' + json.flag);
+              answer = json.flag;
+              broadcastMessage(JSON.stringify({ type: 'flag', value: json.flag }));
+              var obj = {
+                time: (new Date()).getTime(),
+                text: 'Flag is selected. Have fun!',
+                author: 'system',
+                color: userColor
+              };
+              var json = JSON.stringify({ type: 'message', data: obj });
+              broadcastMessage(json);
+              gameStatus = 'play';
+            } else if (json.value === 'win') {
+              console.log('Win registered. Congrats ' + json.userName);
+              var obj = {
+                time: (new Date()).getTime(),
+                text: json.userName + ' guessed the right country ' + answer + '! Congrats!!',
+                author: userName,
+                color: userColor
+              };
+              var json = JSON.stringify({ type: 'message', data: obj });
+              broadcastMessage(json);
+              broadcastMessage(JSON.stringify({ type: 'restart_game' }));
+              gameStatus = 'end';
+            }
           }
         }
       }

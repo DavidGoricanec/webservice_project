@@ -33,15 +33,11 @@ $(function() {
   document.getElementById('start_game').addEventListener('click', () => {
     var obj = {
       type: 'gamesettings',
-      value: 'start_game'
+      value: 'start_game',
+      token: token,
     };
     sendMessage(obj);
   });
-
-  //populate select box
-  for (i = 0; i < flags.length; i++) {
-    $("#flag_selector").append($("<option />").val(names[i]).text(names[i]));
-  }
 
   document.querySelectorAll('#colselect>span').forEach(s => {
     s.addEventListener('click', e => {
@@ -93,9 +89,11 @@ $(function() {
     var obj = {
       type: 'gamesettings',
       value: 'flag',
-      flag: flagName
+      flag: flagName,
+      token: token,
     };
     sendMessage(obj);
+    $.post("http://localhost:5000/api/flag", { flagName: flagName })
   }
 
   //Modal Selection
@@ -120,6 +118,11 @@ $(function() {
 		$.post( "http://localhost:5000/api/authenticate", { username: v_username, password:v_password  })
 		  .done(function( data ) {
 			token = data.token
+      $("#input").val(v_username)
+      var e = $.Event("keydown")
+      e.which = 13
+      e.keyCode = 13
+      $("#input").trigger(e)
 		}).fail(function(e) {
 			alert( JSON.stringify(e) );
 		}).always(function() {
@@ -134,7 +137,8 @@ $(function() {
     var obj = {
       type: 'click',
       color: color,
-      id: id
+      id: id,
+      token: token,
     };
     sendMessage(obj);
   }
@@ -203,6 +207,15 @@ $(function() {
       if (myName == json.value) {
         document.getElementById('draw_rights').checked = true;
         console.log('I am the drawer');
+        //populate select box
+        $.get("http://localhost:5000/api/flags", function(data){
+          console.log('received the following flags:')
+          console.log(data)
+          $("#flag_selector").empty()
+          data.forEach(flag => {
+            $("#flag_selector").append($("<option />").val(flag.flagName).text(flag.flagName + " (" + flag.flagCounter + ")"));
+          })
+        });
         $("#dialogDiv").dialog("open");
       } else {
         document.getElementById('draw_rights').checked = false;
@@ -228,7 +241,8 @@ $(function() {
       }
       var obj = {
         type: 'message',
-        text: msg
+        text: msg,
+        token: token,
       };
       sendMessage(obj);
       $(this).val('');
@@ -241,6 +255,7 @@ $(function() {
           type: 'gamesettings',
           value: 'win',
           userName: myName,
+          token: token,
         };
         sendMessage(obj);
       }
