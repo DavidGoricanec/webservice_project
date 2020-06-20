@@ -8,6 +8,8 @@ const rest = express(); // init express Server
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 
+const db = require('./db');
+
 // websocket server port
 var webSocketsServerPort = 1999;
 
@@ -25,10 +27,22 @@ const htmlEntities = helper.htmlEntities;
 const getColor = helper.getColor;
 const removeColor = helper.removeColor;
 
-rest.get('/api/bla', (req, res) => {
-    res.json({
-        message: 'Welcome to the API'
-    });
+rest.get('/api/authenticate', (req, res) => {
+  console.log('create');
+  const loginInformation = {
+    username: req.body.username,
+    password: req.body.password,
+  };
+  console.log(username);
+  console.log(password);
+  if (db.usernameExists('hallo')) {
+    console.log('works')
+  }else{
+    console.log('errrrrrroor')
+  }
+  res.json({
+    message: 'User Authentication'
+  });
 });
 
 
@@ -89,7 +103,7 @@ wsServer.on('request', function(request) {
           if (json.value === 'start_game') {
             var randomPlayer = Math.floor(Math.random() * (players.length))
             console.log(randomPlayer);
-            var drawer = players.slice(randomPlayer, randomPlayer+1);
+            var drawer = players.slice(randomPlayer, randomPlayer + 1);
             console.log('And the drawer of this round is ' + drawer);
             broadcastMessage(JSON.stringify({ type: 'drawer', value: drawer }));
             gameStatus = 'waitingForFlag';
