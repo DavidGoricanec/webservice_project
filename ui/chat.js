@@ -1,10 +1,17 @@
 $(function() {
   "use strict";
 
-  $("#dialogDiv").dialog({
+  $("#dialogDiv, #dialogLoginDiv").dialog({
     autoOpen: false
   });
 
+
+  
+  var token = null;
+  
+  if (token == null)
+	  $("#dialogLoginDiv").dialog("open");
+  
   let div = document.querySelector('#flag');
   const x = 15;
   const y = 9;
@@ -95,6 +102,20 @@ $(function() {
     $("#dialogDiv").dialog("close");
   });
 
+  //Modal Login
+    document.getElementById("btn_login").addEventListener('click', e => {
+	var v_username = $("#username").val();
+	var v_password = $("#password").val();
+
+	
+	if(v_username == null || v_password == null || v_username == "" || v_password == "")
+	{
+		alert("Please insert a username and a password")
+		return
+	}
+	alert("TO DO Login")
+    $("#dialogLoginDiv").dialog("close");
+  });
   //Server Connection
 
   function sendClick(id, color) {

@@ -20,12 +20,15 @@ div#content , div#main{
   margin-top:10px; 
   height: 160px; 
 }
-#input { 
+input[type="text"], input[type="password"] { 
   border-radius:2px; 
   border:1px solid #ccc;
   margin-top:10px; 
   padding:5px; 
-  width:400px;
+  width:200px;
+}
+#input{
+width:400px;
 }
 #status { 
   width:88px;
