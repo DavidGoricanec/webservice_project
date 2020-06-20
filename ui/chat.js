@@ -116,9 +116,17 @@ $(function() {
 		alert("Please insert a username and a password")
 		return
 	}
-	alert("TO DO Login")
-    $("#dialogLoginDiv").dialog("close");
-  });
+	
+	$.post( "localhost:5000/api/authenticate", { username: v_username, password:v_password  })
+	  .done(function( data ) {
+		alert( "Data Loaded: " + data );
+	}).fail(function() {
+		alert( "error" );
+		}
+	)).always(function() {
+		$("#dialogLoginDiv").dialog("close");
+    });
+
   //Server Connection
 
   function sendClick(id, color) {
