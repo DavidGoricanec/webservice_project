@@ -122,8 +122,7 @@ $(function() {
 		alert( "Data Loaded: " + data );
 	}).fail(function() {
 		alert( "error" );
-		}
-	)).always(function() {
+	}).always(function() {
 		$("#dialogLoginDiv").dialog("close");
     });
 
