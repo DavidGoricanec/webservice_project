@@ -3,16 +3,16 @@ $(function() {
 
   $("#dialogDiv, #dialogLoginDiv").dialog({
     autoOpen: false,
-	closeOnEscape: false
+    closeOnEscape: false
   });
 
-
+  const serverUrl = "localhost";
+  const websocketPort = 1999;
+  const restPort = 5000;
 
   var token = null;
-
-  if (token == null)
-  {
-	$("#dialogLoginDiv").dialog("open");
+  if (token == null) {
+    $("#dialogLoginDiv").dialog("open");
   }
 
   let div = document.querySelector('#flag');
@@ -48,7 +48,6 @@ $(function() {
     s.addEventListener('mouseover', e => {
       if (down && document.getElementById("draw_rights").checked) {
         e.target.style.background = color;
-        document.querySelector('#selected').innerHTML = validate();
         console.log('clicked on ' + e.target.id + ' with color ' + color);
         sendClick(e.target.id, color);
       }
@@ -56,7 +55,6 @@ $(function() {
     s.addEventListener('mousedown', e => {
       if (document.getElementById("draw_rights").checked) {
         e.target.style.background = color;
-        document.querySelector('#selected').innerHTML = validate();
         console.log('clicked on ' + e.target.id + ' with color ' + color);
         sendClick(e.target.id, color);
       }
@@ -77,14 +75,9 @@ $(function() {
   }
 
   function validate() {
-    let a = getArr().map(x => { return x == '' ? 'white' : x });
-    for (i = 0; i < flags.length; i++) {
-      if (JSON.stringify(flags[i].map(x => { return x == '' ? 'white' : x })) == JSON.stringify(a)) {
-        return names[i];
-      }
-    }
     return 'none';
   }
+
   function sendSelectedFlag(flagName) {
     var obj = {
       type: 'gamesettings',
@@ -93,7 +86,7 @@ $(function() {
       token: token,
     };
     sendMessage(obj);
-    $.post("http://localhost:5000/api/flag", { flagName: flagName })
+    $.post("http://" + serverUrl + ":" + restPort + "/api/flag", { flagName: flagName, token: token })
   }
 
   //Modal Selection
@@ -104,35 +97,36 @@ $(function() {
   });
 
   //Modal Login
-    document.getElementById("btn_login").addEventListener('click', e => {
-		var v_username = $("#username").val();
-		var v_password = $("#password").val();
+  document.getElementById("btn_login").addEventListener('click', e => {
+    var v_username = $("#username").val();
+    var v_password = $("#password").val();
 
+    if (v_username == null || v_password == null || v_username == "" || v_password == "") {
+      alert("Please insert a username and a password")
+      return
+    }
 
-		if(v_username == null || v_password == null || v_username == "" || v_password == "")
-		{
-			alert("Please insert a username and a password")
-			return
-		}
+    $.post("http://" + serverUrl + ":" + restPort + "/api/authenticate", { username: v_username, password: v_password })
+      .done(function(data) {
+        if (data.token) {
+          console.log('login ok')
+          $("#dialogLoginDiv").dialog("close")
+          token = data.token
+          $("#input").val(v_username)
+          var e = $.Event("keydown")
+          e.which = 13
+          e.keyCode = 13
+          $("#input").trigger(e)
+        } else {
+          alert('Something seems to be wrong with your user credentials.')
+          console.log(data.message)
+        }
+      }).fail(function(e) {
+        alert('Something went wrong with getting your account details')
+      });
+  });
 
-		$.post( "http://localhost:5000/api/authenticate", { username: v_username, password:v_password  })
-		  .done(function( data ) {
-			token = data.token
-      $("#input").val(v_username)
-      var e = $.Event("keydown")
-      e.which = 13
-      e.keyCode = 13
-      $("#input").trigger(e)
-		}).fail(function(e) {
-			alert( JSON.stringify(e) );
-		}).always(function() {
-			$("#dialogLoginDiv").dialog("close");
-		});
-
-	});
-
-  //Server Connection
-
+  // send mouse click to server
   function sendClick(id, color) {
     var obj = {
       type: 'click',
@@ -164,7 +158,7 @@ $(function() {
     return;
   }
 
-  var connection = new WebSocket('ws://127.0.0.1:1999');
+  var connection = new WebSocket("ws://" + serverUrl + ":" + websocketPort);
 
   function sendMessage(obj) {
     connection.send(JSON.stringify(obj));
@@ -176,13 +170,14 @@ $(function() {
     input.val('');
   };
 
+  // if connection problem
   connection.onerror = function(error) {
-    // when we have some problems with the connection
     content.html($('<p>', {
       text: 'It seems the server is down :('
     }));
   };
 
+  // when message is received
   connection.onmessage = function(message) {
     try {
       var json = JSON.parse(message.data);
@@ -190,7 +185,6 @@ $(function() {
       console.log('Invalid JSON :( ', message.data);
       return;
     }
-
     if (json.type === 'color') {
       myColor = '#' + json.data;
       status.text(myName + ': ').css('color', myColor);
@@ -208,12 +202,12 @@ $(function() {
         document.getElementById('draw_rights').checked = true;
         console.log('I am the drawer');
         //populate select box
-        $.get("http://localhost:5000/api/flags", function(data){
+        $.get("http://" + serverUrl + ":" + restPort + "/api/flags", function(data) {
           console.log('received the following flags:')
           console.log(data)
           $("#flag_selector").empty()
           data.forEach(flag => {
-            $("#flag_selector").append($("<option />").val(flag.flagName).text(flag.flagName + " (" + flag.flagCounter + ")"));
+            $("#flag_selector").append($("<option />").val(flag.flagName).text(flag.flagName + " (Selected: " + flag.flagCounter + "x)"));
           })
         });
         $("#dialogDiv").dialog("open");
@@ -233,6 +227,7 @@ $(function() {
     }
   };
 
+  // if enter is pressed in chat box
   input.keydown(function(e) {
     if (e.keyCode === 13) {
       var msg = $(this).val();
@@ -279,9 +274,7 @@ $(function() {
     }
   }, 3000);
 
-  /**
-   * Add message to the chat window
-   */
+  // Add message to the chat window
   function addMessage(author, message, color, dt) {
     content.prepend('<p class="chat-message"><span class="chat-name" style="color:#' + color + '">'
       + author + '</span> @ ' + (dt.getHours() < 10 ? '0'

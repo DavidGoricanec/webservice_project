@@ -1,40 +1,33 @@
 "use strict";
-process.title = 'chat';
+process.title = 'guesstheflag';
 
 const express = require('express');
-const rest = express(); // init express Server
-
-// JSON Web Tokens (JWT) parts
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
-
+const rest = express();
 const cors = require('cors');
+var webSocketServer = require('websocket').server;
+var http = require('http');
+const bodyParser = require('body-parser');
+const db = require('./db');
+const helper = require('./helper');
 
 var corsOptions = {
   origin: '*',
   optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
 }
 
-const db = require('./db');
-
-// websocket server port
 var webSocketsServerPort = 1999;
-
-// websocket and http servers
-var webSocketServer = require('websocket').server;
-var http = require('http');
-const bodyParser = require('body-parser');
+var restServerPort = 5000;
 
 var clients = [];
 var players = [];
 var gameStatus = 'new';
 var answer = '';
 
-const helper = require('./helper');
 const htmlEntities = helper.htmlEntities;
 const getColor = helper.getColor;
 const removeColor = helper.removeColor;
 
+// rest server settings
 rest.use(bodyParser.urlencoded({ extended: false }));
 rest.use(bodyParser.json());
 
@@ -42,17 +35,21 @@ rest.get('/api/flags', cors(corsOptions), (req, res) => {
   console.log('get /api/flags')
   var flagNames = [];
   db.getFlags().then(flags => {
-    flags.forEach(flag => flagNames.push({flagName: flag.flagName, flagCounter: flag.flagCounter}))
+    flags.forEach(flag => flagNames.push({ flagName: flag.flagName, flagCounter: flag.flagCounter }))
     res.json(flagNames)
   })
 });
 
 rest.post('/api/flag', cors(corsOptions), (req, res) => {
   console.log('post /api/flag')
-  const flagName = req.body.flagName
-  db.updateFlag(flagName).then(() => {
-    res.json('ok')
-  })
+  if (req.body.token) {
+    if (helper.verifyToken(req.body.token)) {
+      const flagName = req.body.flagName
+      db.updateFlag(flagName).then(() => {
+        res.json('ok')
+      })
+    }
+  }
 });
 
 rest.post('/api/authenticate', cors(corsOptions), (req, res) => {
@@ -60,19 +57,19 @@ rest.post('/api/authenticate', cors(corsOptions), (req, res) => {
   let token = null;
   const username = req.body.username;
   const password = req.body.password;
-  console.log('received un' + username);
-  console.log('received pw' + password);
   const promise = db.usernameExists(username);
   promise.then(function(result) {
     if (result) {
       db.usernamePassword(username, password)
         .then((result) => {
-          console.log("usernamepasswordreturn" + result)
           if (result) {
-            token = db.getToken(username);
-            console.log('received token: ' + token)
+            token = helper.getToken(username);
             res.json({
               token: token
+            });
+          } else {
+            res.json({
+              message: 'User Authentication Failure'
             });
           }
         })
@@ -85,9 +82,7 @@ rest.post('/api/authenticate', cors(corsOptions), (req, res) => {
     } else {
       db.saveUsername(username, password)
         .then(value => {
-          console.log('user id:')
-          console.log(value)
-          token = db.getToken(username);
+          token = helper.getToken(username);
           res.json({
             token: token
           })
@@ -100,19 +95,13 @@ rest.post('/api/authenticate', cors(corsOptions), (req, res) => {
         });
     }
   })
-
 });
+rest.listen(restServerPort, () => console.log((new Date()) + " REST server is listening on port " + restServerPort));
 
-
+// websocket server
 var server = http.createServer(function(request, response) {
 });
-server.listen(webSocketsServerPort, function() {
-  console.log((new Date()) + " WS server is listening on port " + webSocketsServerPort);
-});
-
-rest.listen(5000, () => console.log('REST server started on port 5000'));
-
-
+server.listen(webSocketsServerPort, () => console.log((new Date()) + " WS server is listening on port " + webSocketsServerPort));
 var wsServer = new webSocketServer({
   httpServer: server
 });
@@ -124,6 +113,7 @@ function broadcastMessage(json) {
   }
 }
 
+// handle messages
 wsServer.on('request', function(request) {
   console.log((new Date()) + ' Connection from origin ' + request.origin);
   var connection = request.accept(null, request.origin);
@@ -145,9 +135,7 @@ wsServer.on('request', function(request) {
         connection.sendUTF(JSON.stringify({ type: 'color', data: userColor }));
         players.push(userName);
       } else {
-        console.log('received token ' + json.token)
-        const verify = jwt.verify(json.token, 'secretkey');
-        if (verify) {
+        if (helper.verifyToken(json.token)) {
           if (json.type === 'message') {
             console.log((new Date()) + ' Received Message from ' + userName + ': ' + json.text);
             var obj = {

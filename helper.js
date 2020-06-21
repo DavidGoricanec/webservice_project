@@ -1,3 +1,6 @@
+const jwt = require('jsonwebtoken')
+const tokenSecret = 'oursecretkeytokenkey'
+
 function htmlEntities(str) {
   return String(str)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;')
@@ -8,7 +11,7 @@ var usedColors = [];
 
 function getRandomColor() {
   // 16777215 == ffffff in decimal
-  return Math.floor(Math.random()*16777215).toString(16);
+  return Math.floor(Math.random() * 16777215).toString(16);
 }
 
 function getColor() {
@@ -17,7 +20,7 @@ function getColor() {
   while (colorExists) {
     if (usedColors.indexOf(newColor) === -1) {
       colorExists = false;
-    }else{
+    } else {
       newColor = getRandomColor();
     }
   }
@@ -32,8 +35,29 @@ function removeColor(color) {
   }
 }
 
+// create token and return it
+function getToken(username) {
+  try {
+    return jwt.sign(username, tokenSecret);
+  } catch (e) {
+    return false
+  }
+}
+
+// verify token
+function verifyToken(token) {
+  try {
+    return jwt.verify(token, tokenSecret)
+  } catch (e) {
+    console.log('received a wrong token')
+    return false
+  }
+}
+
 module.exports = {
   htmlEntities,
   getColor,
   removeColor,
+  getToken,
+  verifyToken,
 }
